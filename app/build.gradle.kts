@@ -14,7 +14,7 @@ android {
   compileSdk = 36
 
   defaultConfig {
-    applicationId = "com.aistudio.floodalert.system"
+    applicationId = "com.petedianotech.floodalertapp"
     minSdk = 24
     targetSdk = 35
     versionCode = 1

@@ -12,9 +12,13 @@ import androidx.compose.animation.animateColorAsState
 import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.core.tween
+import androidx.compose.foundation.Image
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
+import androidx.compose.ui.graphics.Brush
+import androidx.compose.ui.layout.ContentScale
+import androidx.compose.ui.res.painterResource
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -198,6 +202,11 @@ fun DashboardScreen(
         ) {
             item { Spacer(modifier = Modifier.height(4.dp)) }
 
+            // High-Quality Custom Hero Banner
+            item {
+                DashboardHeroBanner()
+            }
+
             // User Profile Banner
             item {
                 UserProfileCard(
@@ -349,11 +358,19 @@ fun ConnectionStatusCard(
             )
             Spacer(modifier = Modifier.width(16.dp))
             Column(modifier = Modifier.weight(1f)) {
-                Text(
-                    text = "Firebase Firestore Connected",
-                    style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
-                    color = MaterialTheme.colorScheme.onSurface
-                )
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(
+                        text = "Firebase Firestore Connected",
+                        style = MaterialTheme.typography.titleSmall.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
+                    )
+                    Spacer(modifier = Modifier.width(6.dp))
+                    Box(
+                        modifier = Modifier
+                            .size(8.dp)
+                            .background(Color(0xFF34A853), CircleShape)
+                    )
+                }
                 Text(
                     text = when (authState) {
                         is AuthState.Authenticated -> "Signed in as ${authState.user.email ?: "Authorized Node"}"
@@ -645,6 +662,14 @@ fun LiveVibrationMeterCard(
             Spacer(modifier = Modifier.height(12.dp))
 
             // Realtime Linear Gauge
+            val gaugeBrush = Brush.horizontalGradient(
+                colors = if (isExceedingThreshold) {
+                    listOf(Color(0xFFE53935), Color(0xFFD32F2F), Color(0xFFC62828))
+                } else {
+                    listOf(Color(0xFF4285F4), Color(0xFF1A73E8), Color(0xFF0D47A1))
+                }
+            )
+
             Box(
                 modifier = Modifier
                     .fillMaxWidth()
@@ -657,7 +682,7 @@ fun LiveVibrationMeterCard(
                     modifier = Modifier
                         .fillMaxWidth(animatedDeltaProgress)
                         .height(20.dp)
-                        .background(if (isExceedingThreshold) MaterialRed else GoogleBlue)
+                        .background(gaugeBrush)
                 )
 
                 // Threshold Indicator Line
@@ -1170,6 +1195,58 @@ fun requestIgnoreBatteryOptimization(context: Context) {
         } catch (e: Exception) {
             val intent = Intent(Settings.ACTION_IGNORE_BATTERY_OPTIMIZATION_SETTINGS)
             context.startActivity(intent)
+        }
+    }
+}
+
+@Composable
+fun DashboardHeroBanner() {
+    Card(
+        modifier = Modifier
+            .fillMaxWidth()
+            .height(160.dp),
+        shape = RoundedCornerShape(24.dp),
+        colors = CardDefaults.cardColors(containerColor = MaterialTheme.colorScheme.surface),
+        elevation = CardDefaults.cardElevation(defaultElevation = 3.dp)
+    ) {
+        Box(modifier = Modifier.fillMaxSize()) {
+            Image(
+                painter = painterResource(id = com.example.R.drawable.img_dashboard_banner),
+                contentDescription = "Flood monitoring hero banner",
+                modifier = Modifier.fillMaxSize(),
+                contentScale = ContentScale.Crop
+            )
+            Box(
+                modifier = Modifier
+                    .fillMaxSize()
+                    .background(
+                        Brush.verticalGradient(
+                            colors = listOf(
+                                Color.Transparent,
+                                Color.Black.copy(alpha = 0.75f)
+                            )
+                        )
+                    )
+            )
+            Column(
+                modifier = Modifier
+                    .align(Alignment.BottomStart)
+                    .padding(16.dp)
+            ) {
+                Text(
+                    text = "Smart River Gauge Monitoring",
+                    style = MaterialTheme.typography.titleMedium.copy(
+                        fontWeight = FontWeight.Bold,
+                        color = Color.White
+                    )
+                )
+                Text(
+                    text = "Community-based real-time flood warning system",
+                    style = MaterialTheme.typography.bodySmall.copy(
+                        color = Color.White.copy(alpha = 0.85f)
+                    )
+                )
+            }
         }
     }
 }
