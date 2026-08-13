@@ -230,14 +230,7 @@ fun DashboardScreen(
             }
 
             // 2. Role / Mode Switcher Card
-            item {
-                ModeSwitcherCard(
-                    currentMode = nodeMode,
-                    onModeSelected = { selectedMode ->
-                        viewModel.setNodeMode(selectedMode, context)
-                    }
-                )
-            }
+            // Mode switching is now handled automatically based on user login details.
 
             // 3. Mode-Specific Interactive Section
             if (nodeMode == AppNodeMode.SENSOR_UNIT) {

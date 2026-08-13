@@ -35,18 +35,28 @@ class UserPreferencesManager(context: Context) {
     val locationName: StateFlow<String> = _locationName.asStateFlow()
 
     fun saveUserProfile(name: String, village: String, password: String = "") {
+        val mode = if (name == "Dzenje ADDA STEM" && village == "Dzenje" && password == "Dzenje.ADDA.CDSS") {
+            AppNodeMode.SENSOR_UNIT
+        } else {
+            AppNodeMode.CITIZEN_NODE
+        }
+        
         prefs.edit()
             .putString(KEY_USER_NAME, name)
             .putString(KEY_VILLAGE_NAME, village)
             .putString(KEY_LOCATION_NAME, if (village.isNotBlank()) "$village Station" else getSavedLocationName())
             .putBoolean(KEY_IS_LOGGED_IN, true)
+            .putString(KEY_NODE_MODE, mode.name)
             .apply()
+            
         if (password.isNotEmpty()) {
             prefs.edit().putString(KEY_USER_PASSWORD, password).apply()
         }
+        
         _userName.value = name
         _villageName.value = village
         _locationName.value = if (village.isNotBlank()) "$village Station" else getSavedLocationName()
+        _nodeMode.value = mode
         _isLoggedIn.value = true
     }
 
