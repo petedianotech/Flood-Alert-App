@@ -46,6 +46,7 @@ class VibrationDetector(
     private var maxDeltaDuringVibration: Float = 0.0f
     private var lastTriggerTimeMs: Long = 0L
     private var latestGyroRadSec: Float = 0.0f
+    private var lastVibrationEventTimeMs: Long = 0L
 
     fun startListening() {
         if (_isMonitoring.value) return
@@ -99,6 +100,7 @@ class VibrationDetector(
         }
         _isMonitoring.value = false
         continuousStartTimestampMs = null
+        lastVibrationEventTimeMs = 0L
         _currentDelta.value = 0.0f
         _currentGyroMagnitude.value = 0.0f
         _compositeVibrationScore.value = 0.0f
@@ -137,12 +139,12 @@ class VibrationDetector(
                 maxDeltaDuringVibration = delta
             }
 
-            val startTime = continuousStartTimestampMs ?: currentTimeMs.also {
-                continuousStartTimestampMs = it
-                maxDeltaDuringVibration = delta
+            if (continuousStartTimestampMs == null) {
+                continuousStartTimestampMs = currentTimeMs
             }
+            lastVibrationEventTimeMs = currentTimeMs
 
-            val elapsedMs = currentTimeMs - startTime
+            val elapsedMs = currentTimeMs - continuousStartTimestampMs!!
             _continuousDurationMs.value = elapsedMs
 
             // Check if continuous vibration exceeds required duration (e.g., 3000ms)
@@ -157,14 +159,22 @@ class VibrationDetector(
                 // Reset tracker after triggering
                 continuousStartTimestampMs = null
                 maxDeltaDuringVibration = 0.0f
+                lastVibrationEventTimeMs = 0L
                 _continuousDurationMs.value = 0L
             }
         } else {
-            // Single shock or quick tap ended - reset continuous tracking
+            // Instantaneous delta is below threshold. Check if we're in the zero-crossing grace period
+            val lastVib = lastVibrationEventTimeMs
             if (continuousStartTimestampMs != null) {
-                continuousStartTimestampMs = null
-                maxDeltaDuringVibration = 0.0f
-                _continuousDurationMs.value = 0L
+                if (currentTimeMs - lastVib > 800L) {
+                    // Out of grace period, vibration has stopped. Reset timer.
+                    continuousStartTimestampMs = null
+                    maxDeltaDuringVibration = 0.0f
+                    _continuousDurationMs.value = 0L
+                } else {
+                    // Inside grace period, update continuous duration display
+                    _continuousDurationMs.value = currentTimeMs - continuousStartTimestampMs!!
+                }
             }
         }
     }
