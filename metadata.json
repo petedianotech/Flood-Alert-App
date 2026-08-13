@@ -1,0 +1,6 @@
+{
+  "name": "Automatic Flood Alert System",
+  "description": "Real-time flood detection using phone motion/vibrations with continuous background monitoring, instant local alarms, and community alerts via Firebase.",
+  "requestFramePermissions": [],
+  "majorCapabilities": ["MAJOR_CAPABILITY_SERVER_SIDE_GEMINI_API"]
+}
