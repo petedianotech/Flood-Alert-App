@@ -21,8 +21,17 @@ jobs:
           distribution: 'temurin'
           cache: gradle
 
-      - name: Grant execute permission for gradlew
-        run: chmod +x gradlew || true
+      - name: Setup Gradle
+        uses: gradle/actions/setup-gradle@v3
+
+      - name: Grant execute permission and verify Gradle wrapper
+        run: |
+          chmod +x gradlew || true
+          if ! ./gradlew --version >/dev/null 2>&1; then
+            echo "Gradle wrapper missing or corrupted; regenerating..."
+            gradle wrapper --gradle-version 8.11.1
+            chmod +x gradlew || true
+          fi
 
       - name: Decode Keystore from Secret
         env:
