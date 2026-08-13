@@ -726,49 +726,135 @@ fun ReceiverNodeStatusCard() {
         elevation = CardDefaults.cardElevation(defaultElevation = 2.dp)
     ) {
         Column(modifier = Modifier.padding(20.dp)) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Icon(
-                    imageVector = Icons.Default.Shield,
-                    contentDescription = null,
-                    tint = GoogleBlue,
-                    modifier = Modifier.size(32.dp)
-                )
-                Spacer(modifier = Modifier.width(12.dp))
-                Column {
-                    Text(
-                        text = "Citizen Alert Receiver Active",
-                        style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.SpaceBetween,
+                modifier = Modifier.fillMaxWidth()
+            ) {
+                Row(verticalAlignment = Alignment.CenterVertically, modifier = Modifier.weight(1f)) {
+                    Icon(
+                        imageVector = Icons.Default.Shield,
+                        contentDescription = null,
+                        tint = GoogleBlue,
+                        modifier = Modifier.size(32.dp)
                     )
-                    Text(
-                        text = "Listening for FCM payload notifications from sensor units",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SlateGrey
-                    )
+                    Spacer(modifier = Modifier.width(12.dp))
+                    Column {
+                        Text(
+                            text = "Citizen Alert Receiver Active",
+                            style = MaterialTheme.typography.titleMedium.copy(fontWeight = FontWeight.Bold)
+                        )
+                        Text(
+                            text = "Listening for FCM payload notifications from community sensor units",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SlateGrey
+                        )
+                    }
+                }
+                
+                // Pulsing Online Badge
+                Box(
+                    modifier = Modifier
+                        .clip(RoundedCornerShape(8.dp))
+                        .background(Color(0xFFE6F4EA))
+                        .padding(horizontal = 8.dp, vertical = 4.dp),
+                    contentAlignment = Alignment.Center
+                ) {
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Box(
+                            modifier = Modifier
+                                .size(6.dp)
+                                .background(Color(0xFF137333), CircleShape)
+                        )
+                        Spacer(modifier = Modifier.width(4.dp))
+                        Text(
+                            text = "LIVE",
+                            style = MaterialTheme.typography.labelSmall.copy(fontWeight = FontWeight.Bold),
+                            color = Color(0xFF137333)
+                        )
+                    }
                 }
             }
 
             Spacer(modifier = Modifier.height(16.dp))
 
+            // Firebase Project Details
+            Surface(
+                modifier = Modifier.fillMaxWidth(),
+                shape = RoundedCornerShape(12.dp),
+                color = GoogleBlue.copy(alpha = 0.05f),
+                border = androidx.compose.foundation.BorderStroke(1.dp, GoogleBlue.copy(alpha = 0.15f))
+            ) {
+                Row(
+                    modifier = Modifier.padding(12.dp),
+                    verticalAlignment = Alignment.CenterVertically
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.CloudDone,
+                        contentDescription = null,
+                        tint = GoogleBlue,
+                        modifier = Modifier.size(20.dp)
+                    )
+                    Spacer(modifier = Modifier.width(10.dp))
+                    Column {
+                        Text(
+                            text = "Connected to Firebase Cloud",
+                            style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                            color = GoogleBlue
+                        )
+                        Text(
+                            text = "Project: automatic-flood-alert-app",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SlateGrey
+                        )
+                    }
+                }
+            }
+
+            Spacer(modifier = Modifier.height(12.dp))
+
+            // Channels & Emergency Fallbacks
             Surface(
                 modifier = Modifier.fillMaxWidth(),
                 shape = RoundedCornerShape(12.dp),
                 color = MaterialTheme.colorScheme.surfaceVariant.copy(alpha = 0.5f)
             ) {
-                Column(modifier = Modifier.padding(12.dp)) {
+                Column(modifier = Modifier.padding(12.dp), verticalArrangement = Arrangement.spacedBy(8.dp)) {
                     Text(
-                        text = "✓ FCM Topic: 'flood_alerts'",
-                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.SemiBold)
+                        text = "Active Emergency Listeners",
+                        style = MaterialTheme.typography.bodyMedium.copy(fontWeight = FontWeight.Bold),
+                        color = MaterialTheme.colorScheme.onSurface
                     )
-                    Text(
-                        text = "✓ Emergency Audio Override: 100% Volume on Alert",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SlateGrey
-                    )
-                    Text(
-                        text = "✓ Lockscreen Full Screen Intent: Enabled",
-                        style = MaterialTheme.typography.bodySmall,
-                        color = SlateGrey
-                    )
+                    
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "✓", color = Color(0xFF137333), fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "FCM Broadcast Topic: 'flood_alerts'",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SlateGrey
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "✓", color = Color(0xFF137333), fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Emergency Audio Override: 100% Volume on Alert",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SlateGrey
+                        )
+                    }
+
+                    Row(verticalAlignment = Alignment.CenterVertically) {
+                        Text(text = "✓", color = Color(0xFF137333), fontWeight = FontWeight.Bold)
+                        Spacer(modifier = Modifier.width(8.dp))
+                        Text(
+                            text = "Lockscreen Emergency Window Display: Enabled",
+                            style = MaterialTheme.typography.bodySmall,
+                            color = SlateGrey
+                        )
+                    }
                 }
             }
         }

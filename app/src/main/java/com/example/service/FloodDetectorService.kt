@@ -8,6 +8,8 @@ import android.app.Service
 import android.content.Context
 import android.content.Intent
 import android.content.pm.ServiceInfo
+import android.media.AudioAttributes
+import android.media.AudioManager
 import android.os.Build
 import android.os.IBinder
 import android.util.Log
@@ -153,7 +155,13 @@ class FloodDetectorService : Service() {
         )
         repository.publishAlert(alert)
 
-        // 2. Launch AlarmActivity immediately at full volume over lock screen
+        // 2. Set alarm volume to max (even offline, ensure we wake up!)
+        setAlarmVolumeToMaximum()
+
+        // 3. Post a loud high-priority notification with full-screen intent immediately
+        showLocalEmergencyNotification(locationName, deviceName, peakDelta)
+
+        // 4. Launch AlarmActivity immediately at full volume over lock screen
         val alarmIntent = Intent(this, AlarmActivity::class.java).apply {
             flags = Intent.FLAG_ACTIVITY_NEW_TASK or
                     Intent.FLAG_ACTIVITY_CLEAR_TOP or
@@ -162,7 +170,82 @@ class FloodDetectorService : Service() {
             putExtra(AlarmActivity.EXTRA_DEVICE_NAME, deviceName)
             putExtra(AlarmActivity.EXTRA_PEAK_DELTA, peakDelta)
         }
-        startActivity(alarmIntent)
+        try {
+            startActivity(alarmIntent)
+        } catch (e: Exception) {
+            Log.e(TAG, "Error launching full screen AlarmActivity directly", e)
+        }
+    }
+
+    private fun setAlarmVolumeToMaximum() {
+        try {
+            val audioManager = getSystemService(Context.AUDIO_SERVICE) as AudioManager
+            val maxAlarmVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_ALARM)
+            val maxMusicVol = audioManager.getStreamMaxVolume(AudioManager.STREAM_MUSIC)
+            
+            audioManager.setStreamVolume(AudioManager.STREAM_ALARM, maxAlarmVol, 0)
+            audioManager.setStreamVolume(AudioManager.STREAM_MUSIC, maxMusicVol, 0)
+            Log.d(TAG, "Successfully overrode alarm volume to 100% ($maxAlarmVol)")
+        } catch (e: Exception) {
+            Log.e(TAG, "Error setting maximum volume", e)
+        }
+    }
+
+    private fun showLocalEmergencyNotification(location: String, deviceName: String, peakDelta: Float) {
+        val alarmIntent = Intent(this, AlarmActivity::class.java).apply {
+            flags = Intent.FLAG_ACTIVITY_NEW_TASK or
+                    Intent.FLAG_ACTIVITY_CLEAR_TOP or
+                    Intent.FLAG_ACTIVITY_SINGLE_TOP
+            putExtra(AlarmActivity.EXTRA_LOCATION, location)
+            putExtra(AlarmActivity.EXTRA_DEVICE_NAME, deviceName)
+            putExtra(AlarmActivity.EXTRA_PEAK_DELTA, peakDelta)
+        }
+
+        val pendingIntent = PendingIntent.getActivity(
+            this,
+            2002,
+            alarmIntent,
+            PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT
+        )
+
+        createHighPriorityChannel()
+
+        val notification = NotificationCompat.Builder(this, "critical_flood_channel")
+            .setSmallIcon(R.drawable.ic_launcher_foreground)
+            .setContentTitle("🚨 LOCAL CRITICAL FLOOD DETECTED")
+            .setContentText("Vibration alert at $location ($deviceName)")
+            .setPriority(NotificationCompat.PRIORITY_MAX)
+            .setCategory(NotificationCompat.CATEGORY_ALARM)
+            .setFullScreenIntent(pendingIntent, true)
+            .setAutoCancel(true)
+            .build()
+
+        val notificationManager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+        notificationManager.notify(9002, notification)
+    }
+
+    private fun createHighPriorityChannel() {
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.O) {
+            val audioAttributes = AudioAttributes.Builder()
+                .setContentType(AudioAttributes.CONTENT_TYPE_SONIFICATION)
+                .setUsage(AudioAttributes.USAGE_ALARM)
+                .build()
+
+            val channel = NotificationChannel(
+                "critical_flood_channel",
+                "Critical Flood Emergency Alerts",
+                NotificationManager.IMPORTANCE_HIGH
+            ).apply {
+                description = "High priority full screen flood emergency alarms"
+                setBypassDnd(true)
+                enableVibration(true)
+                vibrationPattern = longArrayOf(0, 500, 200, 500, 200, 800)
+                setSound(null, audioAttributes)
+            }
+
+            val manager = getSystemService(Context.NOTIFICATION_SERVICE) as NotificationManager
+            manager.createNotificationChannel(channel)
+        }
     }
 
     private fun stopMonitoring() {
