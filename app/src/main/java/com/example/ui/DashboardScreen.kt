@@ -114,7 +114,7 @@ fun DashboardScreen(
     val authState by authViewModel.authState.collectAsState()
 
     var showSettingsDialog by remember { mutableStateOf(false) }
-    var showBatteryOptimizationDialog by remember { mutableStateOf(false) }
+    val showBatteryDialogFromVm by viewModel.showBatteryDialog.collectAsState()
 
     if (!isLoggedIn) {
         LoginScreen(
@@ -242,7 +242,7 @@ fun DashboardScreen(
                             viewModel.toggleMonitoring(context)
                         },
                         onRequestBatteryOptimization = {
-                            requestIgnoreBatteryOptimization(context)
+                            viewModel.triggerBatteryDialog(true)
                         }
                     )
                 }
@@ -308,6 +308,16 @@ fun DashboardScreen(
                 viewModel.updateDurationMs(newDurationMs)
                 viewModel.updateDeviceDetails(newName, newLocation)
                 showSettingsDialog = false
+            }
+        )
+    }
+
+    if (showBatteryDialogFromVm) {
+        BatteryOptimizationExplanationDialog(
+            onDismiss = { viewModel.triggerBatteryDialog(false) },
+            onConfirm = {
+                viewModel.triggerBatteryDialog(false)
+                requestIgnoreBatteryOptimization(context)
             }
         )
     }
@@ -1101,6 +1111,50 @@ fun CalibrationSettingsDialog(
         dismissButton = {
             TextButton(onClick = onDismiss) {
                 Text("Cancel")
+            }
+        }
+    )
+}
+
+@Composable
+fun BatteryOptimizationExplanationDialog(
+    onDismiss: () -> Unit,
+    onConfirm: () -> Unit
+) {
+    AlertDialog(
+        onDismissRequest = onDismiss,
+        title = {
+            Row(
+                verticalAlignment = Alignment.CenterVertically,
+                horizontalArrangement = Arrangement.spacedBy(8.dp)
+            ) {
+                Icon(
+                    imageVector = Icons.Default.BatteryAlert,
+                    contentDescription = null,
+                    tint = MaterialTheme.colorScheme.primary
+                )
+                Text(text = "Exempt Battery Limit")
+            }
+        },
+        text = {
+            Text(
+                text = "To ensure continuous, reliable, real-time background flood monitoring, Android requires that this application be whitelisted from battery optimization. Otherwise, the background monitoring service may be killed or suspended by the operating system, which could delay critical emergency alerts.\n\nOn the next screen, please select 'Allow' or change the app setting to 'Unrestricted' / 'Don't Optimize'.",
+                style = MaterialTheme.typography.bodyMedium
+            )
+        },
+        confirmButton = {
+            Button(
+                onClick = onConfirm,
+                colors = ButtonDefaults.buttonColors(
+                    containerColor = MaterialTheme.colorScheme.primary
+                )
+            ) {
+                Text("Proceed to Whitelist")
+            }
+        },
+        dismissButton = {
+            TextButton(onClick = onDismiss) {
+                Text("Later")
             }
         }
     )

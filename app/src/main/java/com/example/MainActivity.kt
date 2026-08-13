@@ -1,6 +1,7 @@
 package com.example
 
 import android.Manifest
+import android.content.Intent
 import android.content.pm.PackageManager
 import android.os.Build
 import android.os.Bundle
@@ -15,10 +16,15 @@ import androidx.compose.ui.Modifier
 import androidx.core.content.ContextCompat
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.ViewModelProvider
+import androidx.work.ExistingPeriodicWorkPolicy
+import androidx.work.PeriodicWorkRequestBuilder
+import androidx.work.WorkManager
+import com.example.service.BatteryOptimizationWorker
 import com.example.ui.AuthViewModel
 import com.example.ui.DashboardScreen
 import com.example.ui.DashboardViewModel
 import com.example.ui.theme.FloodAlertTheme
+import java.util.concurrent.TimeUnit
 
 class MainActivity : ComponentActivity() {
 
@@ -45,6 +51,21 @@ class MainActivity : ComponentActivity() {
 
         requestNotificationPermission()
 
+        // Check for battery optimization intent extra on start
+        if (intent?.getBooleanExtra("LAUNCH_BATTERY_WHITELIST_DIALOG", false) == true) {
+            dashboardViewModel.triggerBatteryDialog(true)
+        }
+
+        // Setup periodic battery optimization checks
+        val batteryWorkRequest = PeriodicWorkRequestBuilder<BatteryOptimizationWorker>(
+            1, TimeUnit.DAYS
+        ).build()
+        WorkManager.getInstance(applicationContext).enqueueUniquePeriodicWork(
+            "BatteryOptimizationCheck",
+            ExistingPeriodicWorkPolicy.KEEP,
+            batteryWorkRequest
+        )
+
         setContent {
             FloodAlertTheme {
                 Surface(modifier = Modifier.fillMaxSize()) {
@@ -54,6 +75,14 @@ class MainActivity : ComponentActivity() {
                     )
                 }
             }
+        }
+    }
+
+    override fun onNewIntent(intent: Intent) {
+        super.onNewIntent(intent)
+        setIntent(intent)
+        if (intent.getBooleanExtra("LAUNCH_BATTERY_WHITELIST_DIALOG", false) == true) {
+            dashboardViewModel.triggerBatteryDialog(true)
         }
     }
 

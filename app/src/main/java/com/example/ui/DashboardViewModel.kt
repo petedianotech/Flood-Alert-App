@@ -52,6 +52,13 @@ class DashboardViewModel(context: Context) : ViewModel() {
     private val _isServiceRunning = MutableStateFlow(FloodDetectorService.isRunning)
     val isServiceRunning: StateFlow<Boolean> = _isServiceRunning.asStateFlow()
 
+    private val _showBatteryDialog = MutableStateFlow(false)
+    val showBatteryDialog: StateFlow<Boolean> = _showBatteryDialog.asStateFlow()
+
+    fun triggerBatteryDialog(show: Boolean) {
+        _showBatteryDialog.value = show
+    }
+
     // Local vibration detector for real-time live preview when in app dashboard
     private val liveDetector = VibrationDetector(context.applicationContext) { peakDelta ->
         // Triggered via local preview sensor if active
